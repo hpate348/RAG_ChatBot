@@ -19,11 +19,13 @@ def build_index(pdf_path: str, index_path: str = "faiss_index"):
     print(f"Created {len(chunks)} chunks")
 
     print("Building embeddings and FAISS index...") #using FAISS for faster query vector to similar chunk lookup
-    embeddings = HuggingFaceEmbeddings(
+    transformer = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     ) # create embeddings for all the chunks using a sentence transformer not a typical token transformer
 
-    vectorstore = FAISS.from_documents(chunks, embeddings) # store the chunks' embeddings
+    #the sentence transformer is the NN model that takes in a sentence and makes a vector
+    vectorstore = FAISS.from_documents(chunks, transformer) # give documents and the transformer to use to FAISS to make a vecotre store of all the sentences in the document
+    #remember that the imports are classes and we usually work with objects of those classes using functions in the classes we imported
 
     print(f"Saving index to {index_path}...") #store the FAISS vectore store to computer
     vectorstore.save_local(index_path)

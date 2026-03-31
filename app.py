@@ -12,28 +12,29 @@ load_dotenv()
 
 @st.cache_resource  # Loads the chain once and stores it instead of calling it again and again
 def load_chain():
-    embeddings = HuggingFaceEmbeddings(
+    transformer = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-    vectorstore = FAISS.load_local(
+    vectorstore = FAISS.load_local( #dont make a new one use the one ingest made
         "faiss_index",
-        embeddings,
+        transformerr,
         allow_dangerous_deserialization=True
     )
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3}) # have to wrap the vector store made by ingest as a retriever 
+    #there are a lot of frameworks like FAISS and from_chain_type() does not know how to deal with all of them so retriever is the default interface for langchain
     llm = ChatAnthropic(
         model="claude-sonnet-4-20250514",
         api_key=os.getenv("ANTHROPIC_API_KEY")
-    )
+    )# make the llm object to be passed to the chain
 
     chain = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=retriever,
         return_source_documents=True
     )
-    return chain
+    return chain #Chain is a complete langchain pipeline that does everything 
+#chain.invoke(query) asks the question and returns a result object and it has answers
 
 # UI
 st.title("RAG Document Chatbot")
@@ -89,7 +90,7 @@ if index_ready:
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                chain = load_chain()
+                chain = load_chain() #gets the pipeline fromm retrieve QA or the chain
                 result = chain.invoke({"query": query})
                 answer = result["result"]
                 sources = result["source_documents"]
